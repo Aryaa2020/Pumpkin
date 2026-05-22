@@ -130,4 +130,36 @@ describe('Dashboard API', () => {
       assert.ok(res.body.error);
     });
   });
+
+  describe('PUT /api/settings', () => {
+    it('should reject invalid gamemode', async () => {
+      const res = await request('/api/settings', {
+        method: 'PUT',
+        body: { default_gamemode: 'InvalidMode' },
+      });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.body.error, 'Validation failed');
+      assert.ok(res.body.messages.some((m) => m.includes('default_gamemode')));
+    });
+
+    it('should reject non-numeric max_players', async () => {
+      const res = await request('/api/settings', {
+        method: 'PUT',
+        body: { max_players: 'twenty' },
+      });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.body.error, 'Validation failed');
+      assert.ok(res.body.messages.some((m) => m.includes('max_players')));
+    });
+
+    it('should reject unknown fields', async () => {
+      const res = await request('/api/settings', {
+        method: 'PUT',
+        body: { unknown_field: 'value' },
+      });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.body.error, 'Validation failed');
+      assert.ok(res.body.messages.some((m) => m.includes('Unknown fields')));
+    });
+  });
 });

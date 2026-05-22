@@ -6,6 +6,7 @@ const config = {
   rconPassword: process.env.RCON_PASSWORD || '',
   configPath: process.env.CONFIG_PATH || path.resolve(__dirname, '../../pumpkin.toml'),
   port: parseInt(process.env.PORT, 10) || 3000,
+  dashboardToken: process.env.DASHBOARD_TOKEN || '',
 };
 
 module.exports = config;

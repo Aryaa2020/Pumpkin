@@ -17,8 +17,27 @@ app.use(express.json());
 // Serve static files from public/
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Authentication middleware for API routes
+function authMiddleware(req, res, next) {
+  if (!config.dashboardToken) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Bearer token required' });
+  }
+
+  const token = authHeader.slice(7);
+  if (token !== config.dashboardToken) {
+    return res.status(403).json({ error: 'Forbidden: Invalid token' });
+  }
+
+  next();
+}
+
 // API routes
-app.use('/api', apiRouter);
+app.use('/api', authMiddleware, apiRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -61,6 +80,12 @@ wss.on('connection', (ws) => {
 
 // Start server only if this file is run directly
 if (require.main === module) {
+  if (!config.rconPassword) {
+    console.warn('WARNING: RCON_PASSWORD is not set. RCON authentication may fail or be insecure.');
+  }
+  if (!config.dashboardToken) {
+    console.warn('WARNING: DASHBOARD_TOKEN is not set. The dashboard is running without authentication.');
+  }
   server.listen(config.port, () => {
     console.log(`Pumpkin Dashboard running on http://localhost:${config.port}`);
   });
