@@ -14,7 +14,7 @@ pub type SessionStore = Arc<RwLock<HashSet<String>>>;
 ///
 /// Produces a 64-character hex string derived from 32 random bytes.
 pub fn generate_token() -> String {
-    use rand::Rng;
+    use rand::RngExt;
     let mut rng = rand::rng();
     let bytes: [u8; 32] = rng.random();
     bytes.iter().map(|b| format!("{b:02x}")).collect()
