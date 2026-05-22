@@ -230,6 +230,14 @@ impl PumpkinServer {
             });
         }
 
+        let dashboard = server.advanced_config.networking.dashboard.clone();
+        if dashboard.enabled {
+            let dashboard_server = server.clone();
+            server.spawn_task(async move {
+                crate::net::dashboard::run_dashboard(dashboard, dashboard_server).await;
+            });
+        }
+
         let tcp_listener = if server.basic_config.java_edition {
             let address = server.basic_config.java_edition_address;
             // Setup the TCP server socket.

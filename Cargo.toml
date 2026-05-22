@@ -192,3 +192,8 @@ wit-bindgen = "0.57"
 
 postcard = { version = "1.1", features = ["alloc"] }
 tracing-serde-structured = "0.4"
+
+actix-web = "4"
+actix-rt = "2"
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+mime_guess = "2"
