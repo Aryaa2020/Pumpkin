@@ -1,5 +1,5 @@
 use pumpkin_data::{
-    Block, BlockState,
+    Block, BlockDirection, BlockState,
     fluid::Fluid,
     tag::{self, Taggable},
 };
@@ -235,6 +235,33 @@ impl PathfindingContext {
 
         self.collision_cache.insert(pos, has_collision);
         has_collision
+    }
+
+    /// Returns the effective floor level at a given position by examining collision shapes.
+    ///
+    /// If the block below `pos` is solid on top but not a full cube (e.g. a slab),
+    /// the floor level is approximated by the maximum Y extent of the block's collision
+    /// shapes. Otherwise, the floor level is simply `pos.y`.
+    pub fn get_floor_level(&self, pos: Vector3<i32>) -> f64 {
+        let below_pos = Vector3::new(pos.x, pos.y - 1, pos.z);
+        let below_block_pos = below_pos.as_blockpos();
+        let below_state_id = self.world.get_block_state_id(&below_block_pos);
+        let below_state = BlockState::from_id(below_state_id);
+
+        // If the block below is solid on top but not a full cube, compute the max Y
+        // from its collision shapes to approximate the effective floor height.
+        if below_state.is_side_solid(BlockDirection::Up) && !below_state.is_full_cube() {
+            let mut max_y: f64 = 0.0;
+            for shape in below_state.get_block_collision_shapes() {
+                if shape.max.y > max_y {
+                    max_y = shape.max.y;
+                }
+            }
+            // The floor level is the block-below's Y coordinate plus the collision height
+            f64::from(pos.y - 1) + max_y
+        } else {
+            f64::from(pos.y)
+        }
     }
 
     pub fn clear_caches(&mut self) {

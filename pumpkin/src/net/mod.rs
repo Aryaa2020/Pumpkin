@@ -27,6 +27,7 @@ use thiserror::Error;
 use uuid::Uuid;
 pub mod authentication;
 pub mod bedrock;
+pub mod dashboard;
 pub mod java;
 pub mod lan_broadcast;
 mod proxy;

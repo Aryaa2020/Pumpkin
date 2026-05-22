@@ -1,4 +1,5 @@
 use auth::AuthenticationConfig;
+use dashboard::DashboardConfig;
 use proxy::ProxyConfig;
 use query::QueryConfig;
 use rcon::RCONConfig;
@@ -8,6 +9,7 @@ use crate::{CompressionConfig, LANBroadcastConfig};
 
 pub mod auth;
 pub mod compression;
+pub mod dashboard;
 pub mod lan_broadcast;
 pub mod proxy;
 pub mod query;
@@ -25,6 +27,8 @@ pub struct NetworkingConfig {
     pub query: QueryConfig,
     /// RCON (remote console) configuration.
     pub rcon: RCONConfig,
+    /// Embedded web dashboard configuration.
+    pub dashboard: DashboardConfig,
     /// Proxy-related networking settings.
     pub proxy: ProxyConfig,
     /// Java Edition packet compression settings.

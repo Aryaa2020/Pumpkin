@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create the Node.js dashboard backend server with REST API endpoints that communicate with the Pumpkin Minecraft server via RCON protocol and read/write the pumpkin.toml configuration file. The backend provides: server status, player list, console command execution, settings management, and system resource monitoring.",
+  "status": "completed",
+  "steps": [
+    "Create dashboard/ directory at project root with package.json including dependencies: express, ws (WebSocket for real-time console), toml (for reading/writing pumpkin.toml config), node-rcon or custom RCON client implementation",
+    "Create dashboard/src/server.js as the main entry point - Express server listening on port 3000, serving static files from dashboard/public/ and API routes from dashboard/src/routes/",
+    "Create dashboard/src/rcon-client.js - a custom RCON client implementation matching the protocol in pumpkin/src/net/rcon/packet.rs. The RCON protocol: 4-byte little-endian length, 4-byte request ID, 4-byte type (3=auth, 2=command), null-terminated body, null padding. Response is similar with type 0=command response, 2=auth response.",
+    "Create dashboard/src/routes/status.js - GET /api/status endpoint that returns server online/offline status by attempting RCON connection, plus system resource info (CPU/RAM from os module)",
+    "Create dashboard/src/routes/players.js - GET /api/players endpoint that sends 'list' command via RCON to get online players",
+    "Create dashboard/src/routes/console.js - POST /api/console endpoint that accepts a command string and sends it via RCON, returning the response. Also set up WebSocket endpoint /ws/console for real-time console streaming",
+    "Create dashboard/src/routes/settings.js - GET /api/settings reads pumpkin.toml and returns editable fields (motd, max_players, default_gamemode, default_difficulty). PUT /api/settings writes changes back to pumpkin.toml",
+    "Create dashboard/src/routes/power.js - POST /api/power/stop sends 'stop' command via RCON. POST /api/power/restart sends stop then monitors for restart.",
+    "Create dashboard/src/config.js - dashboard configuration (RCON host, port, password, pumpkin.toml path) with defaults matching pumpkin-config defaults (localhost:25575)",
+    "Create dashboard/src/routes/index.js - aggregates all route modules and exports the Express router"
+  ],
+  "acceptance_criteria": [
+    "Running 'npm install' in dashboard/ completes without errors",
+    "Running 'npm start' in dashboard/ starts the Express server on port 3000",
+    "GET /api/status returns JSON with server status fields",
+    "GET /api/settings returns JSON with settings from pumpkin.toml (or defaults if file not found)",
+    "POST /api/console accepts { command: 'string' } body and returns response",
+    "All API endpoints return proper JSON error responses when RCON is unavailable"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Pumpkin/dashboard && export PATH=/opt/toolchains/.nvm/versions/node/v22.22.3/bin:$PATH && npm install",
+    "cd /projects/sandbox/Pumpkin/dashboard && export PATH=/opt/toolchains/.nvm/versions/node/v22.22.3/bin:$PATH && npm test",
+    "cd /projects/sandbox/Pumpkin/dashboard && export PATH=/opt/toolchains/.nvm/versions/node/v22.22.3/bin:$PATH && timeout 5 npm start || true"
+  ],
+  "blocked_reason": null,
+  "findings": "All 7 tests pass. Server starts on port 3000 successfully. RCON endpoints return 503 gracefully when server is not running. Settings endpoint returns defaults when pumpkin.toml is not found. Node.js v22.22.3 used from /opt/toolchains/.nvm/versions/node/v22.22.3/bin."
+}

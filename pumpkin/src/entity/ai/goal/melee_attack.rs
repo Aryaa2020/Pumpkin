@@ -4,6 +4,7 @@ use crate::entity::ai::goal::GoalFuture;
 use crate::entity::ai::pathfinder::NavigatorGoal;
 use crate::entity::mob::Mob;
 use crate::entity::predicate::EntityPredicate;
+use pumpkin_data::attributes::Attributes;
 use pumpkin_util::math::vector3::Vector3;
 use rand::RngExt;
 
@@ -68,8 +69,18 @@ impl Goal for MeleeAttackGoal {
             if !target.get_entity().is_alive() {
                 return false;
             }
-            // TODO: add path when is implemented Navigation
-            true //TODO: modify that because if a path to the target not exists then call mob.is_in_attack_range(target)
+            // Reject targets that are beyond twice the follow range (unreachable)
+            let follow_range = mob
+                .get_mob_entity()
+                .living_entity
+                .get_attribute_value(&Attributes::FOLLOW_RANGE);
+            let mob_pos = mob.get_entity().pos.load();
+            let target_pos = target.get_entity().pos.load();
+            let dist_sq = mob_pos.squared_distance_to_vec(&target_pos);
+            if dist_sq > (follow_range * 2.0).powi(2) {
+                return false;
+            }
+            true
         })
     }
 

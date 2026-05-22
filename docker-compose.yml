@@ -18,3 +18,24 @@ services:
     cap_drop:
       - ALL
     read_only: true
+
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      - pumpkin
+    environment:
+      - RCON_HOST=pumpkin
+      - RCON_PORT=25575
+      - RCON_PASSWORD=${RCON_PASSWORD:-}
+      - CONFIG_PATH=/pumpkin-data/pumpkin.toml
+      - DASHBOARD_TOKEN=${DASHBOARD_TOKEN:-}
+    volumes:
+      - ./data:/pumpkin-data
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
