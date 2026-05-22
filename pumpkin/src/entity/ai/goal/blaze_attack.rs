@@ -29,9 +29,33 @@ impl BlazeShootFireballGoal {
         }
     }
 
-    const fn get_follow_distance() -> f64 {
-        // TODO: use FOLLOW_RANGE
-        48.0
+    fn get_follow_distance(&self) -> f64 {
+        // 0.3: Read from FOLLOW_RANGE attribute (vanilla Mob#getAttributeValue).
+        // Falls back to the entity-type default if no instance is set.
+        self.blaze.upgrade().map_or(48.0, |blaze| {
+            blaze
+                .entity
+                .living_entity
+                .get_attribute_value(&pumpkin_data::attributes::Attributes::FOLLOW_RANGE)
+        })
+    }
+
+    /// 0.5: line-of-sight raycast (vanilla `LivingEntity#hasLineOfSight`).
+    /// Eye-to-eye, stops on any solid block (matches vanilla `ClipContext.Block.COLLIDER`).
+    async fn has_line_of_sight(
+        blaze: &BlazeEntity,
+        target: &dyn crate::entity::EntityBase,
+    ) -> bool {
+        let world = blaze.entity.living_entity.entity.world.load();
+        let blaze_eye = blaze.entity.living_entity.entity.get_eye_pos();
+        let target_eye = target.get_entity().get_eye_pos();
+        world
+            .raycast(blaze_eye, target_eye, async |pos, w| {
+                let state = w.get_block_state(pos);
+                state.is_solid()
+            })
+            .await
+            .is_none()
     }
 }
 
@@ -41,13 +65,9 @@ impl Goal for BlazeShootFireballGoal {
             let Some(blaze) = self.blaze.upgrade() else {
                 return false;
             };
+            // 0.4: only attack live targets (vanilla Goal#canUse + LivingEntity#isAlive).
             let target = blaze.entity.target.lock().await.clone();
-            if target.is_some() {
-                // TODO: check is_alive
-                true
-            } else {
-                false
-            }
+            target.is_some_and(|t| t.get_entity().is_alive())
         })
     }
 
@@ -57,12 +77,7 @@ impl Goal for BlazeShootFireballGoal {
                 return false;
             };
             let target = blaze.entity.target.lock().await.clone();
-            if target.is_some() {
-                // TODO: check is_alive
-                true
-            } else {
-                false
-            }
+            target.is_some_and(|t| t.get_entity().is_alive())
         })
     }
 
@@ -85,7 +100,7 @@ impl Goal for BlazeShootFireballGoal {
         true
     }
 
-    fn tick<'a>(&'a mut self, _mob: &'a dyn Mob) -> GoalFuture<'a, ()> {
+    fn tick<'a>(&'a mut self, mob: &'a dyn Mob) -> GoalFuture<'a, ()> {
         Box::pin(async move {
             self.attack_time -= 1;
 
@@ -98,8 +113,8 @@ impl Goal for BlazeShootFireballGoal {
                 return;
             };
 
-            // TODO: hasLineOfSight check
-            let has_line_of_sight = true;
+            // 0.5: line-of-sight raycast (extracted to keep tick under clippy line cap).
+            let has_line_of_sight = Self::has_line_of_sight(&blaze, target.as_ref()).await;
 
             if has_line_of_sight {
                 self.last_seen = 0;
@@ -123,11 +138,12 @@ impl Goal for BlazeShootFireballGoal {
 
                 if self.attack_time <= 0 {
                     self.attack_time = 20;
-                    // TODO: doHurtTarget
+                    // 0.6: apply melee damage (vanilla Mob#doHurtTarget).
+                    blaze.entity.try_attack(mob, target.as_ref()).await;
                 }
 
                 // TODO: set wanted position to target
-            } else if distance_sq < Self::get_follow_distance().powi(2) && has_line_of_sight {
+            } else if distance_sq < self.get_follow_distance().powi(2) && has_line_of_sight {
                 let target_y_offset = target_pos.y + 0.5; // roughly target.getY(0.5)
                 let blaze_y_offset = blaze_pos.y + 0.5; // roughly blaze.getY(0.5)
                 let yd = target_y_offset - blaze_y_offset;
