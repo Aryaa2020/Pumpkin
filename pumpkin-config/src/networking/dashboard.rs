@@ -22,7 +22,7 @@ impl Default for DashboardConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            address: SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 8080),
+            address: SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 6969),
             password: String::new(),
             max_sessions: 10,
         }
