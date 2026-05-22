@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix critical AI goal and pathfinding bugs: track_target always returning false for can_navigate_to_entity, melee_attack can_start not checking path validity, and blaze_attack using hardcoded follow distance instead of FOLLOW_RANGE attribute plus missing is_alive checks.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In pumpkin/src/entity/ai/goal/track_target.rs, fix can_navigate_to_entity() (line ~48) to return true when the mob's navigator has a valid path or can reach the target position. Since full path validation is expensive, implement a distance-based heuristic: check if the target is within FOLLOW_RANGE and not blocked by a simple vertical check. For now, change the default return to `true` (matching vanilla behavior where navigation check is a soft hint, not a hard gate) since the mob will still be gated by the pathfinder's actual ability to reach the target.",
     "In pumpkin/src/entity/ai/goal/melee_attack.rs, fix the can_start method (around line 72) to add a comment noting the TODO but ensure it still works: the current 'true' return is actually correct vanilla behavior - vanilla also starts melee attack goal even without a completed path (it navigates during tick). Add the missing visibility/path distance check as a secondary gate: if target distance > follow_range squared, return false.",
@@ -21,5 +21,5 @@
     "Run: export RUSTUP_HOME=/opt/toolchains/.rustup && export CARGO_HOME=/opt/toolchains/.cargo && export PATH=/opt/toolchains/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:/opt/toolchains/.cargo/bin:$PATH && cargo check -p pumpkin 2>&1 | grep -v wasmtime | tail -10"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing build errors: 36 errors all from missing pumpkin-plugin-wit submodule (WIT/WASM plugin system). These errors exist on the base branch and are unrelated to entity AI code. All modified files compile cleanly with no new errors or warnings. Tests for pumpkin-data, pumpkin-world, and pumpkin-util all pass."
 }
