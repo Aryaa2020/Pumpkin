@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pumpkin Dashboard</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <h1 class="header-title">Pumpkin Dashboard</h1>
+      <span class="server-address" id="server-address">localhost:25565</span>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="card status-card">
+      <h2 class="card-title">Server Status</h2>
+      <div class="status-content">
+        <button class="power-button" id="power-button" title="Server Power">
+          <svg class="power-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v10M18.36 6.64A9 9 0 1 1 5.64 6.64"/>
+          </svg>
+        </button>
+        <div class="status-text" id="status-text">Checking...</div>
+        <div class="uptime" id="uptime"></div>
+      </div>
+    </div>
+
+    <div class="card players-card">
+      <h2 class="card-title">
+        <span id="player-count">0/0</span> Players Online
+      </h2>
+      <div class="player-list" id="player-list">
+        <div class="empty-message">Checking server...</div>
+      </div>
+    </div>
+
+    <div class="card console-card">
+      <h2 class="card-title">Console</h2>
+      <div class="console-output" id="console-output"></div>
+      <div class="console-input-wrapper">
+        <span class="console-prompt">&gt;</span>
+        <input type="text" class="console-input" id="console-input" placeholder="Enter command..." autocomplete="off">
+      </div>
+    </div>
+
+    <div class="card settings-card">
+      <h2 class="card-title">Settings</h2>
+      <form class="settings-form" id="settings-form">
+        <div class="form-group">
+          <label for="setting-motd">MOTD</label>
+          <input type="text" id="setting-motd" name="motd" placeholder="A Minecraft Server">
+        </div>
+        <div class="form-group">
+          <label for="setting-max-players">Max Players</label>
+          <input type="number" id="setting-max-players" name="max_players" min="1" max="1000" placeholder="20">
+        </div>
+        <div class="form-group">
+          <label for="setting-gamemode">Gamemode</label>
+          <select id="setting-gamemode" name="default_gamemode">
+            <option value="Survival">Survival</option>
+            <option value="Creative">Creative</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Spectator">Spectator</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="setting-difficulty">Difficulty</label>
+          <select id="setting-difficulty" name="default_difficulty">
+            <option value="Peaceful">Peaceful</option>
+            <option value="Easy">Easy</option>
+            <option value="Normal">Normal</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-save" id="save-settings-btn">Save Settings</button>
+      </form>
+    </div>
+
+    <div class="card resources-card">
+      <h2 class="card-title">Resources</h2>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span>CPU Usage</span>
+          <span class="resource-value" id="cpu-value">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill progress-cpu" id="cpu-bar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span>RAM Usage</span>
+          <span class="resource-value" id="ram-value">0 MB</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill progress-ram" id="ram-bar" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/console.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/players.js"></script>
+</body>
+</html>
