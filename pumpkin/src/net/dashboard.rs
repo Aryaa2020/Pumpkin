@@ -135,7 +135,7 @@ impl ServerProvider for DashboardServerProvider {
             player
                 .kick(
                     crate::net::DisconnectReason::Kicked,
-                    pumpkin_util::text::TextComponent::text(&reason),
+                    pumpkin_util::text::TextComponent::text(reason),
                 )
                 .await;
             Ok(())
@@ -161,7 +161,7 @@ impl ServerProvider for DashboardServerProvider {
             player
                 .kick(
                     crate::net::DisconnectReason::Kicked,
-                    pumpkin_util::text::TextComponent::text(&format!("Banned: {reason}")),
+                    pumpkin_util::text::TextComponent::text(format!("Banned: {reason}")),
                 )
                 .await;
             tracing::warn!(
