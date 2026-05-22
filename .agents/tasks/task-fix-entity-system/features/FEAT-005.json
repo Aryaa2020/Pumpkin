@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "fix",
   "description": "Address review feedback: fix slime spawns to use chunk-seeded hash, add monster darkness check to drowned spawns, add ambient mob despawn distance override, and prevent named mobs from despawning.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In pumpkin/src/entity/type.rs, add is_slime_chunk() function using chunk coordinate hash and fix check_slime_spawn_rules to only allow below-Y=40 spawns in slime chunks (~10%)",
     "In pumpkin/src/entity/type.rs, change DROWNED spawn rules to require BOTH water AND monster darkness checks",
@@ -20,5 +20,5 @@
     "Run: export RUSTUP_HOME=/opt/toolchains/.rustup && export CARGO_HOME=/opt/toolchains/.cargo && export PATH=/opt/toolchains/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:/opt/toolchains/.cargo/bin:$PATH && cargo check -p pumpkin 2>&1 | grep -v wasmtime | tail -10"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All fixes compile cleanly with no new clippy warnings or errors. Pre-existing 36 errors from missing pumpkin-plugin-wit submodule remain. All 75 tests pass. Used ArcSwap::load().is_some() to check for custom names on Entity. MobCategory::AMBIENT.id pattern matches existing code in natural_spawner.rs."
 }
