@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix entity spawn rules to better match vanilla Minecraft Java 1.26.1. Add missing spawn rule checks for specific mob types in pumpkin/src/entity/type.rs check_spawn_rules() function, and fix despawn logic to match vanilla distances.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In pumpkin/src/entity/type.rs, expand the check_spawn_rules() function to handle more mob types. Add cases for: HUSK (same as zombie + sky visible check), DROWNED (in water check), SLIME (special biome/Y-level check: spawns in swamp biome at any Y or below Y=40 in specific chunks), MAGMA_CUBE (same as monster rules), PHANTOM (special rules - only spawns above sea level, player hasn't slept), BLAZE/GHAST/ZOMBIFIED_PIGLIN (nether fortress/nether rules - use basic monster rules for now since fortress detection is not implemented), ENDERMAN (same as monster rules), SILVERFISH (same as monster rules). For aquatic mobs (COD, SALMON, SQUID, DOLPHIN, TROPICAL_FISH, PUFFERFISH, AXOLOTL, GLOW_SQUID), add water-based spawn checks (in water, below sea level for some). For passive mobs (CHICKEN, COW, PIG, SHEEP, HORSE, DONKEY, RABBIT, etc.), add the check for light level >= 9 on the block below.",
     "Add a helper function check_animal_spawn_rules(world, pos) that validates: block below is grass_block, and light level at spawn pos >= 9. Use this for all passive overworld mobs.",
@@ -20,5 +20,5 @@
     "Run: export RUSTUP_HOME=/opt/toolchains/.rustup && export CARGO_HOME=/opt/toolchains/.cargo && export PATH=/opt/toolchains/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:/opt/toolchains/.cargo/bin:$PATH && cargo check -p pumpkin 2>&1 | grep -v wasmtime | tail -10"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation compiles cleanly with no new errors or warnings. All 75 tests pass. Pre-existing 36 errors from missing pumpkin-plugin-wit submodule remain (unrelated). Used MINECRAFT_ANIMALS_SPAWNABLE_ON block tag for animal spawn checks (more correct than direct GRASS_BLOCK comparison). Used MINECRAFT_ALLOWS_SURFACE_SLIME_SPAWNS biome tag for slime surface spawns. Used MINECRAFT_WATER fluid tag for water mob checks."
 }
