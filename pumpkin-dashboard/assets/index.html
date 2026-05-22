@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pumpkin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">Pumpkin</h1>
+                <span class="logo-sub">Dashboard</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#/" class="nav-link active" data-page="overview">
+                    <span class="nav-icon">&#9679;</span> Overview
+                </a></li>
+                <li><a href="#/players" class="nav-link" data-page="players">
+                    <span class="nav-icon">&#9679;</span> Players
+                </a></li>
+                <li><a href="#/console" class="nav-link" data-page="console">
+                    <span class="nav-icon">&#9679;</span> Console
+                </a></li>
+                <li><a href="#/settings" class="nav-link" data-page="settings">
+                    <span class="nav-icon">&#9679;</span> Settings
+                </a></li>
+                <li><a href="#/performance" class="nav-link" data-page="performance">
+                    <span class="nav-icon">&#9679;</span> Performance
+                </a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <div id="login-view" class="view">
+                <div class="login-card">
+                    <h2>Dashboard Login</h2>
+                    <form id="login-form">
+                        <input type="password" id="login-password" placeholder="Enter password" required>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                    <p id="login-error" class="error-text"></p>
+                </div>
+            </div>
+            <div id="app-view" class="view hidden">
+                <div id="page-content"></div>
+            </div>
+        </main>
+    </div>
+    <div id="toast-container"></div>
+    <script src="/js/components.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ use crate::net::bedrock::BedrockClient;
 use crate::net::java::{JavaClient, PacketHandlerResult};
 use crate::net::{ClientPlatform, DisconnectReason};
 use crate::net::{lan_broadcast::LANBroadcast, query, rcon::RCONServer};
+use crate::net::dashboard::DashboardServerProvider;
 use crate::server::{Server, ticker::Ticker};
 use plugin::server::server_command::ServerCommandEvent;
 use pumpkin_config::{AdvancedConfiguration, BasicConfiguration};
@@ -227,6 +228,15 @@ impl PumpkinServer {
             let rcon_server = server.clone();
             server.spawn_task(async move {
                 RCONServer::run(&rcon, rcon_server).await;
+            });
+        }
+
+        let dashboard_config = server.advanced_config.networking.dashboard.clone();
+        if dashboard_config.enabled {
+            let provider = Arc::new(DashboardServerProvider::new(server.clone()));
+            let console = Arc::new(pumpkin_dashboard::ConsoleBroadcast::new(1024));
+            server.spawn_task(async move {
+                pumpkin_dashboard::DashboardServer::run(dashboard_config, provider, console).await;
             });
         }
 

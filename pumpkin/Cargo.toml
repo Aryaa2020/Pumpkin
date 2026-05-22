@@ -30,6 +30,8 @@ pumpkin-protocol.workspace = true
 pumpkin-macros.workspace = true
 pumpkin-codecs.workspace = true
 
+pumpkin-dashboard.workspace = true
+
 dashmap.workspace = true
 crossbeam.workspace = true
 uuid.workspace = true

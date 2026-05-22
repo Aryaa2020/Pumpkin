@@ -165,6 +165,18 @@ async fn main() {
         }
     );
 
+    if pumpkin_server.server.advanced_config.networking.dashboard.enabled {
+        info!(
+            "Web dashboard available at: {}",
+            TextComponent::text(format!(
+                "http://{}",
+                pumpkin_server.server.advanced_config.networking.dashboard.address
+            ))
+            .color_named(NamedColor::Aqua)
+            .to_pretty_console()
+        );
+    }
+
     pumpkin_server.start().await;
 
     info!(
