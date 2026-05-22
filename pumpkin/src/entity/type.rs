@@ -304,6 +304,51 @@ pub fn from_type(
     mob
 }
 
+/// Checks whether an animal can spawn at the given position.
+/// Requires the block below to be in the `animals_spawnable_on` tag (grass_block)
+/// and sufficient light (sky light >= 9 or block light >= 9).
+fn check_animal_spawn_rules(world: &World, pos: &BlockPos) -> bool {
+    use pumpkin_data::tag::Block as BlockTag;
+    use pumpkin_data::tag::Taggable;
+
+    let block_below = world.get_block(&pos.down());
+    if !block_below.has_tag(&BlockTag::MINECRAFT_ANIMALS_SPAWNABLE_ON) {
+        return false;
+    }
+
+    // Light check: sky light >= 9 OR block light >= 9
+    let sky_light = world.get_sky_light_level(pos);
+    let block_light = world.get_block_light_level(pos).unwrap_or(0);
+    sky_light >= 9 || block_light >= 9
+}
+
+/// Checks whether an aquatic mob can spawn at the given position.
+/// Requires the block at pos to be water.
+fn check_water_mob_spawn_rules(world: &World, pos: &BlockPos) -> bool {
+    use pumpkin_data::tag::Fluid::MINECRAFT_WATER;
+    use pumpkin_data::tag::Taggable;
+
+    world.get_fluid(pos).has_tag(&MINECRAFT_WATER)
+}
+
+/// Checks whether a slime can spawn at the given position.
+/// Slimes spawn in biomes tagged with `allows_surface_slime_spawns` (swamp biomes)
+/// OR below Y=40 (approximation of slime chunk logic).
+fn check_slime_spawn_rules(world: &World, pos: &BlockPos) -> bool {
+    use pumpkin_data::tag::Taggable;
+    use pumpkin_data::tag::WorldgenBiome::MINECRAFT_ALLOWS_SURFACE_SLIME_SPAWNS;
+
+    // Below Y=40: simplified slime chunk approximation
+    if pos.0.y <= 40 {
+        return true;
+    }
+
+    // In swamp biomes (uses the vanilla tag for surface slime spawns)
+    let biome = world.level.get_rough_biome(pos);
+    biome.has_tag(&MINECRAFT_ALLOWS_SURFACE_SLIME_SPAWNS)
+}
+
+#[expect(clippy::too_many_lines)]
 pub fn check_spawn_rules(
     entity_type: &'static EntityType,
     world: &World,
@@ -312,6 +357,7 @@ pub fn check_spawn_rules(
 ) -> bool {
     let id = entity_type.id;
 
+    // Hostile mobs using standard monster spawn rules (darkness + difficulty check)
     if id == EntityType::BOGGED.id
         || id == EntityType::CAVE_SPIDER.id
         || id == EntityType::CREEPER.id
@@ -319,11 +365,13 @@ pub fn check_spawn_rules(
         || id == EntityType::GIANT.id
         || id == EntityType::RAVAGER.id
         || id == EntityType::SKELETON.id
+        || id == EntityType::STRAY.id
         || id == EntityType::SPIDER.id
         || id == EntityType::WITCH.id
         || id == EntityType::WITHER.id
         || id == EntityType::WITHER_SKELETON.id
         || id == EntityType::ZOMBIE.id
+        || id == EntityType::HUSK.id
         || id == EntityType::ZOMBIE_HORSE.id
         || id == EntityType::ZOMBIE_VILLAGER.id
         || id == EntityType::CREAKING.id
@@ -332,13 +380,73 @@ pub fn check_spawn_rules(
         || id == EntityType::VEX.id
         || id == EntityType::VINDICATOR.id
         || id == EntityType::WARDEN.id
+        || id == EntityType::MAGMA_CUBE.id
+        || id == EntityType::PHANTOM.id
+        || id == EntityType::BLAZE.id
+        || id == EntityType::GHAST.id
+        || id == EntityType::HOGLIN.id
+        || id == EntityType::ZOGLIN.id
+        || id == EntityType::PIGLIN.id
+        || id == EntityType::PIGLIN_BRUTE.id
+        || id == EntityType::ZOMBIFIED_PIGLIN.id
+        || id == EntityType::SILVERFISH.id
+        || id == EntityType::ENDERMITE.id
     {
         return mob::MobEntity::check_monster_spawn_rules(world, pos, is_thundering);
     }
+
+    // Bat has its own special spawn rules
     if id == EntityType::BAT.id {
         return bat::BatEntity::check_bat_spawn_rules(world, pos);
     }
 
-    // TODO
+    // Drowned spawns in water
+    if id == EntityType::DROWNED.id {
+        return check_water_mob_spawn_rules(world, pos);
+    }
+
+    // Slime has biome/Y-level based spawn logic
+    if id == EntityType::SLIME.id {
+        return check_slime_spawn_rules(world, pos);
+    }
+
+    // Passive overworld animals: require grass_block below and light >= 9
+    if id == EntityType::COW.id
+        || id == EntityType::PIG.id
+        || id == EntityType::SHEEP.id
+        || id == EntityType::CHICKEN.id
+        || id == EntityType::HORSE.id
+        || id == EntityType::DONKEY.id
+        || id == EntityType::RABBIT.id
+        || id == EntityType::GOAT.id
+        || id == EntityType::LLAMA.id
+        || id == EntityType::FOX.id
+        || id == EntityType::WOLF.id
+        || id == EntityType::OCELOT.id
+        || id == EntityType::PANDA.id
+        || id == EntityType::POLAR_BEAR.id
+        || id == EntityType::MOOSHROOM.id
+        || id == EntityType::FROG.id
+        || id == EntityType::ARMADILLO.id
+        || id == EntityType::CAMEL.id
+        || id == EntityType::SNIFFER.id
+    {
+        return check_animal_spawn_rules(world, pos);
+    }
+
+    // Aquatic mobs: require water at spawn position
+    if id == EntityType::COD.id
+        || id == EntityType::SALMON.id
+        || id == EntityType::TROPICAL_FISH.id
+        || id == EntityType::PUFFERFISH.id
+        || id == EntityType::SQUID.id
+        || id == EntityType::GLOW_SQUID.id
+        || id == EntityType::DOLPHIN.id
+        || id == EntityType::AXOLOTL.id
+    {
+        return check_water_mob_spawn_rules(world, pos);
+    }
+
+    // Default: allow spawn for any unhandled types (bees, cats, etc. with more complex rules)
     true
 }
