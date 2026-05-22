@@ -139,7 +139,11 @@ impl Goal for BlazeShootFireballGoal {
                 if self.attack_time <= 0 {
                     self.attack_time = 20;
                     // 0.6: apply melee damage (vanilla Mob#doHurtTarget).
-                    blaze.entity.try_attack(mob, target.as_ref()).await;
+                    // NOTE: vanilla blaze melee does NOT ignite the target — confirmed by
+                    // user testing against a real 26.1 client. The damage type is mob_attack,
+                    // not fire (see minecraft.wiki "Fire Resistance" — fire-resistance does
+                    // not block blaze melee precisely because it isn't fire damage).
+                    let _ = blaze.entity.try_attack(mob, target.as_ref()).await;
                 }
 
                 // TODO: set wanted position to target

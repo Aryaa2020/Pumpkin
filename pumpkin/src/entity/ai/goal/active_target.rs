@@ -74,12 +74,20 @@ impl ActiveTargetGoal {
     fn find_closest_target(&mut self, mob: &MobEntity) {
         let world = mob.living_entity.entity.world.load();
         if self.target_type == &EntityType::PLAYER {
+            // 0.16: filter out creative + spectator players. Vanilla NearestAttackableTargetGoal
+            // composes its predicate with EntitySelector.NO_CREATIVE_OR_SPECTATOR; mobs never
+            // pick those players as targets.
             let potential_player = world
                 .get_closest_player(
                     mob.living_entity.entity.pos.load(),
                     mob.living_entity
                         .get_attribute_value(&Attributes::FOLLOW_RANGE),
                 )
+                .filter(|p: &Arc<Player>| {
+                    let gm = p.gamemode.load();
+                    gm != pumpkin_util::GameMode::Creative
+                        && gm != pumpkin_util::GameMode::Spectator
+                })
                 .map(|p: Arc<Player>| p as Arc<dyn EntityBase>);
             if let Some(potential_entity) = potential_player
                 && let Some(living) = potential_entity.get_living_entity()

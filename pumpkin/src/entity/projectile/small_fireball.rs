@@ -81,7 +81,17 @@ impl EntityBase for SmallFireballEntity {
                     });
                 }
                 ProjectileHit::Block { pos, face, .. } => {
-                    // Try to place fire
+                    // 0.14: vanilla AbstractHurtingProjectile#onHitBlock places fire only when:
+                    //   1. mobGriefing gamerule is enabled, AND
+                    //   2. the adjacent block (in the hit-face direction) is air.
+                    // Without these checks we currently overwrite stone/dirt/etc with fire.
+                    let world = self.get_entity().world.load();
+
+                    let mob_griefing = world.level_info.load().game_rules.mob_griefing;
+                    if !mob_griefing {
+                        return;
+                    }
+
                     let block_to_place = match face {
                         pumpkin_data::BlockDirection::Up => pos.up(),
                         pumpkin_data::BlockDirection::Down => pos.down(),
@@ -90,7 +100,11 @@ impl EntityBase for SmallFireballEntity {
                         pumpkin_data::BlockDirection::West => pos.west(),
                         pumpkin_data::BlockDirection::East => pos.east(),
                     };
-                    let world = self.get_entity().world.load();
+
+                    if !world.get_block_state(&block_to_place).is_air() {
+                        return;
+                    }
+
                     let fire_state = pumpkin_data::Block::FIRE.default_state.id;
                     world
                         .set_block_state(
