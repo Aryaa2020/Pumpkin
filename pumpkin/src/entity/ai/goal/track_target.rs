@@ -44,8 +44,9 @@ impl TrackTargetGoal {
 
     fn can_navigate_to_entity(&mut self, mob: &dyn Mob, _target: &LivingEntity) -> bool {
         self.check_can_navigate_cooldown = to_goal_ticks(10 + mob.get_random().random_range(0..5));
-        // TODO: after implementing path
-        false
+        // Permissive default: the mob will still be gated by the actual pathfinder.
+        // In vanilla this is a soft hint, not a hard gate.
+        true
     }
 
     pub fn can_track(

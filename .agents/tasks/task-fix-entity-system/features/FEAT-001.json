@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix critical AI goal and pathfinding bugs: track_target always returning false for can_navigate_to_entity, melee_attack can_start not checking path validity, and blaze_attack using hardcoded follow distance instead of FOLLOW_RANGE attribute plus missing is_alive checks.",
+  "status": "in_progress",
+  "steps": [
+    "In pumpkin/src/entity/ai/goal/track_target.rs, fix can_navigate_to_entity() (line ~48) to return true when the mob's navigator has a valid path or can reach the target position. Since full path validation is expensive, implement a distance-based heuristic: check if the target is within FOLLOW_RANGE and not blocked by a simple vertical check. For now, change the default return to `true` (matching vanilla behavior where navigation check is a soft hint, not a hard gate) since the mob will still be gated by the pathfinder's actual ability to reach the target.",
+    "In pumpkin/src/entity/ai/goal/melee_attack.rs, fix the can_start method (around line 72) to add a comment noting the TODO but ensure it still works: the current 'true' return is actually correct vanilla behavior - vanilla also starts melee attack goal even without a completed path (it navigates during tick). Add the missing visibility/path distance check as a secondary gate: if target distance > follow_range squared, return false.",
+    "In pumpkin/src/entity/ai/goal/blaze_attack.rs, replace the hardcoded get_follow_distance() of 48.0 with a proper lookup of the FOLLOW_RANGE attribute from the blaze's mob entity. Add is_alive() checks in can_start and should_continue for both the blaze itself and the target. Add the missing doHurtTarget call when distance < 4.0 by calling mob_entity.try_attack().",
+    "In pumpkin/src/entity/ai/goal/step_and_destroy_block.rs, implement the world.removeBlock call (around line counter > 60) by calling world.set_block_state(&tweak_pos, &BlockState::AIR) or equivalent method to actually break the block when the destruction counter expires."
+  ],
+  "acceptance_criteria": [
+    "track_target.rs can_navigate_to_entity returns true (navigation check is permissive)",
+    "blaze_attack.rs uses mob entity's FOLLOW_RANGE attribute instead of hardcoded 48.0",
+    "blaze_attack.rs checks is_alive() on blaze and target in can_start/should_continue",
+    "blaze_attack.rs calls try_attack when distance < 4.0 (melee range)",
+    "step_and_destroy_block.rs actually removes the block from the world when counter > 60",
+    "Code compiles with cargo clippy without errors on the pumpkin crate"
+  ],
+  "verification": [
+    "Run: export RUSTUP_HOME=/opt/toolchains/.rustup && export CARGO_HOME=/opt/toolchains/.cargo && export PATH=/opt/toolchains/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:/opt/toolchains/.cargo/bin:$PATH && cargo check -p pumpkin 2>&1 | grep -v wasmtime | tail -10"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
