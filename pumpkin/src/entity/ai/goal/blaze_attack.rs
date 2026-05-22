@@ -139,7 +139,13 @@ impl Goal for BlazeShootFireballGoal {
                 if self.attack_time <= 0 {
                     self.attack_time = 20;
                     // 0.6: apply melee damage (vanilla Mob#doHurtTarget).
-                    blaze.entity.try_attack(mob, target.as_ref()).await;
+                    let hit_landed = blaze.entity.try_attack(mob, target.as_ref()).await;
+                    // 0.15: blaze ignites target for 4 seconds on a successful melee hit
+                    // (vanilla Blaze#doHurtTarget). Only when the hit actually landed —
+                    // damage_with_context returns false on invuln frames, creative, etc.
+                    if hit_landed {
+                        target.get_entity().set_on_fire_for(4.0);
+                    }
                 }
 
                 // TODO: set wanted position to target

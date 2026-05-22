@@ -36,6 +36,10 @@ These are concrete bugs surfaced by reading the current code; each is small and 
 - [ ] **0.11** `LivingEntity::pickup` distance gating (vanilla restricts to ~1.0 blocks).
 - [ ] **0.12** Replace hardcoded `NIGHT_START` with environment-attribute `MONSTERS_BURN` lookup; ensure undead burning is dimension- and light-correct.
 - [ ] **0.13** Creeper-ignite goal: line-of-sight check (currently TODO at `creeper_ignite.rs:78`).
+- [ ] **0.14** `SmallFireballEntity::on_hit` (Block branch) must honor `mobGriefing` and only place fire on **air** blocks. Currently overwrites stone/dirt/etc. with fire (vanilla `AbstractHurtingProjectile#onHitBlock`).
+- [ ] **0.15** Blaze melee ignites target for 4 seconds (vanilla `Blaze#doHurtTarget`).
+- [ ] **0.16** `ActiveTargetGoal::find_closest_target` filters out creative + spectator players (vanilla `EntitySelector.NO_CREATIVE_OR_SPECTATOR`).
+- [ ] **0.17** `MobEntity::try_attack` returns `bool` indicating whether the hit landed, so post-hit hooks (ignite, knockback enchant, etc.) can be conditional.
 
 ---
 
@@ -103,7 +107,13 @@ Walk pathfinding exists. Other movement modes are missing.
 - [ ] **4.20** Phantom: dive-attack on insomniac players, flap, daylight burning.
 - [ ] **4.21** Ghast: fireball goal, ambient drift movement.
 - [ ] **4.22** Magma cube / Slime: split on death, jump movement controller.
-- [ ] **4.23** Blaze: contact-fire damage, resume-from-Phase-0 fixes.
+- [ ] **4.23** Blaze full vanilla parity:
+  - [ ] **4.23a** `set_charged` sends `FLAGS_ID` metadata (visible spinning rods during charge-up volley).
+  - [ ] **4.23b** Heals 1 HP every 30 ticks while `fire_ticks > 0` or in lava (vanilla `Blaze#aiStep`).
+  - [ ] **4.23c** Takes 1 damage per tick in water (vanilla `Blaze#aiStep`).
+  - [ ] **4.23d** Ambient smoke particle trail.
+  - [ ] **4.23e** Confirm fire-immunity flag is set (vanilla `Blaze#fireImmune = true`).
+  - [ ] **4.23f** Blaze rod loot drop (vanilla `entities/blaze.json` loot table).
 - [ ] **4.24** Hoglin: melee toss, repel from warped fungus and overworld portals.
 - [ ] **4.25** Piglin: hostile-to-non-gold-armor, gold-ingot bartering, hostile to wither_skeleton & zoglin, overworld zombification (15s timer).
 - [ ] **4.26** Piglin Brute: bastion guard, no zombification fear.
