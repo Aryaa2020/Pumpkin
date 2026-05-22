@@ -37,9 +37,8 @@ These are concrete bugs surfaced by reading the current code; each is small and 
 - [ ] **0.12** Replace hardcoded `NIGHT_START` with environment-attribute `MONSTERS_BURN` lookup; ensure undead burning is dimension- and light-correct.
 - [ ] **0.13** Creeper-ignite goal: line-of-sight check (currently TODO at `creeper_ignite.rs:78`).
 - [ ] **0.14** `SmallFireballEntity::on_hit` (Block branch) must honor `mobGriefing` and only place fire on **air** blocks. Currently overwrites stone/dirt/etc. with fire (vanilla `AbstractHurtingProjectile#onHitBlock`).
-- [ ] **0.15** Blaze melee ignites target for 4 seconds (vanilla `Blaze#doHurtTarget`).
 - [ ] **0.16** `ActiveTargetGoal::find_closest_target` filters out creative + spectator players (vanilla `EntitySelector.NO_CREATIVE_OR_SPECTATOR`).
-- [ ] **0.17** `MobEntity::try_attack` returns `bool` indicating whether the hit landed, so post-hit hooks (ignite, knockback enchant, etc.) can be conditional.
+- [ ] **0.17** `MobEntity::try_attack` returns `bool` indicating whether the hit landed, so post-hit hooks (knockback enchant, fire aspect, etc.) can be conditional.
 
 ---
 
