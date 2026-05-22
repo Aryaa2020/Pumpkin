@@ -32,10 +32,16 @@ impl WalkNodeEvaluator {
         self.base.can_float
     }
 
-    // TODO: Check collision shapes for partial blocks (slabs/stairs)
-    #[allow(clippy::unused_self)]
+    /// Returns the effective floor level at a given position.
+    ///
+    /// Queries the pathfinding context for block collision shape information to
+    /// handle partial blocks like slabs and stairs.
     fn get_floor_level(&self, pos: Vector3<i32>) -> f64 {
-        f64::from(pos.y)
+        if let Some(ctx) = &self.base.context {
+            ctx.get_floor_level(pos)
+        } else {
+            f64::from(pos.y)
+        }
     }
 
     fn get_mob_jump_height(&self) -> f64 {
@@ -111,7 +117,16 @@ impl WalkNodeEvaluator {
             n
         });
 
-        // TODO: Add ray-march collision check for blocked types (fence/door)
+        // Block iron doors and fences that cannot be opened/walked over
+        if path_type == PathType::DoorIronClosed
+            || (path_type == PathType::Fence && !self.base.can_walk_over_fences)
+        {
+            let mut n = self.base.get_node(pos.as_blockpos());
+            n.closed = true;
+            n.path_type = path_type;
+            n.cost_malus = -1.0;
+            return Some(n);
+        }
 
         if path_type != PathType::Walkable
             && !(self.is_amphibious() && path_type == PathType::Water)
@@ -353,7 +368,23 @@ impl NodeEvaluator for WalkNodeEvaluator {
         let mob_z = mob_data.position.z;
         let on_ground = mob_data.on_ground;
 
-        // TODO: add swimming support
+        // Swimming support: if the mob can float and is in water, use current Y as start
+        if self.is_amphibious() {
+            let water_check_pos = Vector3::new(
+                mob_x.floor() as i32,
+                mob_y_f64.floor() as i32,
+                mob_z.floor() as i32,
+            );
+            let path_type = self.get_cached_path_type(water_check_pos).await;
+            if path_type == PathType::Water {
+                let y = mob_y_f64.floor() as i32;
+                let start_pos = Vector3::new(mob_x.floor() as i32, y, mob_z.floor() as i32);
+                if let Some(node) = self.get_start_node(start_pos).await {
+                    return Some(node);
+                }
+            }
+        }
+
         let y = if on_ground {
             (mob_y_f64 + 0.5).floor() as i32
         } else {

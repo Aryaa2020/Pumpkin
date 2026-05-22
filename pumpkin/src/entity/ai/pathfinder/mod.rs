@@ -123,6 +123,17 @@ impl Navigator {
         self.path_type_overrides.insert(path_type, malus);
     }
 
+    /// Configures whether this mob can swim, adjusting the evaluator's float capability
+    /// and the water path type penalty accordingly.
+    pub fn set_can_swim(&mut self, can_swim: bool) {
+        self.evaluator.set_can_float(can_swim);
+        if can_swim {
+            self.path_type_overrides.insert(PathType::Water, 0.0);
+        } else {
+            self.path_type_overrides.remove(&PathType::Water);
+        }
+    }
+
     pub const fn set_mob_dimensions(&mut self, width: f32, height: f32) {
         self.mob_width = width;
         self.mob_height = height;
