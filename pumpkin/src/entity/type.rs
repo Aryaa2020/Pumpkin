@@ -331,16 +331,33 @@ fn check_water_mob_spawn_rules(world: &World, pos: &BlockPos) -> bool {
     world.get_fluid(pos).has_tag(&MINECRAFT_WATER)
 }
 
+/// Determines whether a chunk is a slime chunk based on chunk coordinates.
+/// Vanilla uses world seed, but we use a fixed-seed hash for consistency.
+/// Approximately 10% of chunks will be slime chunks.
+fn is_slime_chunk(chunk_x: i32, chunk_z: i32) -> bool {
+    let seed: i64 =
+        (i64::from(chunk_x).wrapping_mul(i64::from(chunk_x)).wrapping_mul(0x4c1906i64))
+            .wrapping_add(i64::from(chunk_x).wrapping_mul(0x5ac0dbi64))
+            .wrapping_add(
+                i64::from(chunk_z).wrapping_mul(i64::from(chunk_z)).wrapping_mul(0x4307a7i64),
+            )
+            .wrapping_add(i64::from(chunk_z).wrapping_mul(0x5f24fi64))
+            ^ 0x3ad8_025fi64;
+    (seed.unsigned_abs() % 10) == 0
+}
+
 /// Checks whether a slime can spawn at the given position.
 /// Slimes spawn in biomes tagged with `allows_surface_slime_spawns` (swamp biomes)
-/// OR below Y=40 (approximation of slime chunk logic).
+/// OR below Y=40 in designated slime chunks (~10% of chunks).
 fn check_slime_spawn_rules(world: &World, pos: &BlockPos) -> bool {
     use pumpkin_data::tag::Taggable;
     use pumpkin_data::tag::WorldgenBiome::MINECRAFT_ALLOWS_SURFACE_SLIME_SPAWNS;
 
-    // Below Y=40: simplified slime chunk approximation
+    // Below Y=40: only spawn in slime chunks
     if pos.0.y <= 40 {
-        return true;
+        let chunk_x = pos.0.x >> 4;
+        let chunk_z = pos.0.z >> 4;
+        return is_slime_chunk(chunk_x, chunk_z);
     }
 
     // In swamp biomes (uses the vanilla tag for surface slime spawns)
@@ -402,9 +419,10 @@ pub fn check_spawn_rules(
         return bat::BatEntity::check_bat_spawn_rules(world, pos);
     }
 
-    // Drowned spawns in water
+    // Drowned spawns in water AND requires monster darkness rules
     if id == EntityType::DROWNED.id {
-        return check_water_mob_spawn_rules(world, pos);
+        return check_water_mob_spawn_rules(world, pos)
+            && mob::MobEntity::check_monster_spawn_rules(world, pos, is_thundering);
     }
 
     // Slime has biome/Y-level based spawn logic

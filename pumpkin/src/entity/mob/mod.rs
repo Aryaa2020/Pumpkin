@@ -368,9 +368,20 @@ impl MobEntity {
     pub fn check_despawn(&self, nearest_player_distance_sq: f64) -> bool {
         let category = &self.living_entity.entity.entity_type.category;
 
+        // Named entities never despawn (vanilla: persistenceRequired flag)
+        if self.living_entity.entity.custom_name.load().is_some() {
+            return false;
+        }
+
         // Persistent mobs never despawn (creatures/passive, water creatures)
         if category.is_persistent {
             return false;
+        }
+
+        // Ambient mobs (bats) have a shorter despawn distance in vanilla
+        if category.id == MobCategory::AMBIENT.id {
+            let ambient_despawn_dist_sq: f64 = 64.0 * 64.0;
+            return nearest_player_distance_sq > ambient_despawn_dist_sq;
         }
 
         let despawn_dist = f64::from(category.despawn_distance);

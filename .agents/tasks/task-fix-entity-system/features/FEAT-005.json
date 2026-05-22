@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-005",
+  "type": "fix",
+  "description": "Address review feedback: fix slime spawns to use chunk-seeded hash, add monster darkness check to drowned spawns, add ambient mob despawn distance override, and prevent named mobs from despawning.",
+  "status": "in_progress",
+  "steps": [
+    "In pumpkin/src/entity/type.rs, add is_slime_chunk() function using chunk coordinate hash and fix check_slime_spawn_rules to only allow below-Y=40 spawns in slime chunks (~10%)",
+    "In pumpkin/src/entity/type.rs, change DROWNED spawn rules to require BOTH water AND monster darkness checks",
+    "In pumpkin/src/entity/mob/mod.rs, add ambient mob (bat) shorter despawn distance of 64 blocks in check_despawn",
+    "In pumpkin/src/entity/mob/mod.rs, add named entity persistence check at the top of check_despawn"
+  ],
+  "acceptance_criteria": [
+    "Slime spawns below Y=40 are restricted to ~10% of chunks via coordinate hash",
+    "Drowned requires both water presence and monster darkness rules",
+    "Ambient mobs despawn at 64 blocks instead of 128",
+    "Named mobs (entities with custom_name set) never despawn",
+    "Code compiles without clippy errors on pumpkin crate"
+  ],
+  "verification": [
+    "Run: export RUSTUP_HOME=/opt/toolchains/.rustup && export CARGO_HOME=/opt/toolchains/.cargo && export PATH=/opt/toolchains/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:/opt/toolchains/.cargo/bin:$PATH && cargo check -p pumpkin 2>&1 | grep -v wasmtime | tail -10"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
