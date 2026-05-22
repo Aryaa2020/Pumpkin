@@ -391,6 +391,8 @@ pub fn check_spawn_rules(
         || id == EntityType::ZOMBIFIED_PIGLIN.id
         || id == EntityType::SILVERFISH.id
         || id == EntityType::ENDERMITE.id
+        || id == EntityType::BREEZE.id
+        || id == EntityType::PILLAGER.id
     {
         return mob::MobEntity::check_monster_spawn_rules(world, pos, is_thundering);
     }

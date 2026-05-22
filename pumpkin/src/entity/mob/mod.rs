@@ -8,12 +8,14 @@ use crate::world::World;
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::damage::DamageType;
+use pumpkin_data::entity::MobCategory;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::meta_data_type::MetaDataType;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::tracked_data::TrackedData;
 use pumpkin_protocol::java::client::play::{CHeadRot, CUpdateEntityRot, Metadata};
 use pumpkin_util::Difficulty;
+use pumpkin_util::GameMode;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector2::Vector2;
@@ -354,6 +356,38 @@ impl MobEntity {
         let entity = &self.living_entity.entity;
         entity.set_on_fire_for(8.0);
     }
+
+    /// Checks if this mob should despawn based on distance to the nearest player.
+    /// Returns true if the mob should be removed from the world.
+    ///
+    /// Vanilla rules:
+    /// - Persistent mobs (passive creatures) never despawn
+    /// - Beyond `despawn_distance` (128 blocks): instant despawn
+    /// - Beyond `NO_DESPAWN_DISTANCE` (32 blocks): random 1/800 chance per tick
+    /// - Within 32 blocks: never despawn
+    pub fn check_despawn(&self, nearest_player_distance_sq: f64) -> bool {
+        let category = &self.living_entity.entity.entity_type.category;
+
+        // Persistent mobs never despawn (creatures/passive, water creatures)
+        if category.is_persistent {
+            return false;
+        }
+
+        let despawn_dist = f64::from(category.despawn_distance);
+        let no_despawn_dist = f64::from(MobCategory::NO_DESPAWN_DISTANCE);
+
+        // Beyond max despawn distance: instant despawn
+        if nearest_player_distance_sq > despawn_dist * despawn_dist {
+            return true;
+        }
+
+        // Beyond 32 blocks but within 128: random 1/800 chance per tick
+        if nearest_player_distance_sq > no_despawn_dist * no_despawn_dist {
+            return rand::random_range(0..800) == 0;
+        }
+
+        false
+    }
 }
 
 pub trait Mob: EntityBase + Send + Sync {
@@ -463,6 +497,26 @@ impl<T: Mob + Send + 'static> EntityBase for T {
         Box::pin(async move {
             let mob_entity = self.get_mob_entity();
             mob_entity.tick_sun_burn().await;
+
+            // Despawn check (before AI to avoid wasted work on doomed mobs)
+            {
+                let world = mob_entity.living_entity.entity.world.load();
+                let entity_pos = mob_entity.living_entity.entity.pos.load();
+                let players = world.players.load();
+                let nearest_player_dist_sq = players
+                    .iter()
+                    .filter(|p| {
+                        let gm = p.gamemode.load();
+                        gm != GameMode::Spectator && gm != GameMode::Creative
+                    })
+                    .map(|p| p.position().squared_distance_to_vec(&entity_pos))
+                    .fold(f64::MAX, f64::min);
+
+                if mob_entity.check_despawn(nearest_player_dist_sq) {
+                    mob_entity.living_entity.entity.remove().await;
+                    return;
+                }
+            }
 
             if mob_entity.breeding_cooldown.load(Relaxed) > 0 {
                 mob_entity.breeding_cooldown.fetch_sub(1, Relaxed);
