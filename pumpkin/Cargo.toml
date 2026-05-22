@@ -112,6 +112,7 @@ actix-web = { workspace = true }
 actix-rt = { workspace = true }
 rust-embed = { workspace = true }
 mime_guess = { workspace = true }
+toml = { workspace = true }
 
 bitflags = { workspace = true }
 
