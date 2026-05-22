@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Address security and correctness issues found in review: add authentication middleware, change default bind to 127.0.0.1, fix CPU usage always 0%, add input validation on settings, replace blocking I/O with async.",
+  "status": "in_progress",
+  "steps": [
+    "Add password field to DashboardConfig (empty string default = no auth required, same as RCON pattern)",
+    "Change default bind address from 0.0.0.0:8080 to 127.0.0.1:8080",
+    "Add authentication middleware/extractor for /api/ routes that checks Bearer token matching configured password (skip if password is empty)",
+    "Store sysinfo::System in AppState (wrapped in Mutex) and refresh on each /api/status call for accurate CPU readings",
+    "Add input validation in put_settings: validate default_gamemode and default_difficulty against known valid values, return 400 if invalid",
+    "Replace std::fs::read_to_string and std::fs::write with tokio::fs equivalents in put_settings handler",
+    "Add comment explaining actix-web runtime compatibility with tokio"
+  ],
+  "acceptance_criteria": [
+    "DashboardConfig has a password field with empty default",
+    "Default bind address is 127.0.0.1:8080",
+    "API routes require Bearer token when password is non-empty",
+    "CPU usage is read from a persistent sysinfo::System instance",
+    "Invalid gamemode/difficulty values are rejected with 400",
+    "File I/O in put_settings uses tokio::fs",
+    "cargo check -p pumpkin -p pumpkin-config passes"
+  ],
+  "verification": [
+    "Run 'cargo check -p pumpkin-config' and confirm 0 errors",
+    "Run 'cargo check -p pumpkin' and confirm 0 errors (pre-existing WASM errors excluded)",
+    "Run 'cargo clippy -p pumpkin-config' and confirm no clippy errors"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
