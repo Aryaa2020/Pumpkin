@@ -1,0 +1,7 @@
+{
+  "task_id": "task-web-dashboard",
+  "task_description": "Add an embedded web UI dashboard to the Pumpkin Minecraft server. The dashboard provides server management capabilities (player management, console, settings, performance monitoring) via a browser interface. It compiles into the single server executable using rust-embed for static assets and axum for HTTP serving. When enabled, the server prints the dashboard URL on startup.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

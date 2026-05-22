@@ -220,7 +220,7 @@ var App = {
     connectWebSocket: function() {
         if (App.ws) App.ws.close();
         var proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var url = proto + '//' + window.location.host + '/api/v1/ws';
+        var url = proto + '//' + window.location.host + '/api/v1/ws?token=' + encodeURIComponent(App.token);
         App.ws = new WebSocket(url);
 
         App.ws.onmessage = function(event) {

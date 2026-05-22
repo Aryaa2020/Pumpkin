@@ -10,6 +10,7 @@ use crate::net::{ClientPlatform, DisconnectReason};
 use crate::net::{lan_broadcast::LANBroadcast, query, rcon::RCONServer};
 use crate::net::dashboard::DashboardServerProvider;
 use crate::server::{Server, ticker::Ticker};
+use pumpkin_dashboard::{ConsoleBroadcast, DashboardTracingLayer};
 use plugin::server::server_command::ServerCommandEvent;
 use pumpkin_config::{AdvancedConfiguration, BasicConfiguration};
 use pumpkin_macros::send_cancellable;
@@ -59,6 +60,13 @@ pub struct LoggingConfig {
 pub type LoggerOption = Option<(ReadlineLogWrapper, LevelFilter, LoggingConfig)>;
 pub static LOGGER_IMPL: LazyLock<Arc<OnceLock<LoggerOption>>> =
     LazyLock::new(|| Arc::new(OnceLock::new()));
+
+/// Global console broadcast for the dashboard tracing layer.
+///
+/// Created early so the tracing layer can send log events to WebSocket clients
+/// once the dashboard server starts accepting connections.
+pub static CONSOLE_BROADCAST: LazyLock<Arc<ConsoleBroadcast>> =
+    LazyLock::new(|| Arc::new(ConsoleBroadcast::new(1024)));
 
 #[expect(clippy::print_stderr)]
 pub fn init_logger(advanced_config: &AdvancedConfiguration) {
@@ -136,8 +144,10 @@ pub fn init_logger(advanced_config: &AdvancedConfiguration) {
                 local_offset,
                 time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"),
             ));
+            let dashboard_layer = DashboardTracingLayer::new(CONSOLE_BROADCAST.clone());
             let registry = tracing_subscriber::registry()
                 .with(env_filter)
+                .with(dashboard_layer)
                 .with(fmt_layer);
             if let Some(file_logger) = file_logger {
                 registry.with(file_logger).init();
@@ -146,8 +156,10 @@ pub fn init_logger(advanced_config: &AdvancedConfiguration) {
             }
         } else {
             let fmt_layer = fmt_layer.without_time();
+            let dashboard_layer = DashboardTracingLayer::new(CONSOLE_BROADCAST.clone());
             let registry = tracing_subscriber::registry()
                 .with(env_filter)
+                .with(dashboard_layer)
                 .with(fmt_layer);
             if let Some(file_logger) = file_logger {
                 registry.with(file_logger).init();
@@ -233,11 +245,16 @@ impl PumpkinServer {
 
         let dashboard_config = server.advanced_config.networking.dashboard.clone();
         if dashboard_config.enabled {
-            let provider = Arc::new(DashboardServerProvider::new(server.clone()));
-            let console = Arc::new(pumpkin_dashboard::ConsoleBroadcast::new(1024));
-            server.spawn_task(async move {
-                pumpkin_dashboard::DashboardServer::run(dashboard_config, provider, console).await;
-            });
+            if dashboard_config.password.is_empty() {
+                error!("Dashboard is enabled but no password is configured. Set a password in configuration.toml under [networking.dashboard]. Dashboard will not start.");
+            } else {
+                let provider = Arc::new(DashboardServerProvider::new(server.clone()));
+                let console = CONSOLE_BROADCAST.clone();
+                server.spawn_task(async move {
+                    pumpkin_dashboard::DashboardServer::run(dashboard_config, provider, console)
+                        .await;
+                });
+            }
         }
 
         let tcp_listener = if server.basic_config.java_edition {

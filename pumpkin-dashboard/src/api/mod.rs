@@ -33,6 +33,10 @@ pub struct AppState {
     /// Dashboard configuration.
     pub config: DashboardConfig,
     /// Active session tokens.
+    ///
+    /// TODO: Sessions currently never expire. A future iteration should add
+    /// time-based expiry (e.g., storing creation timestamps and periodically
+    /// pruning stale sessions) to limit the window of a leaked token.
     pub sessions: Arc<RwLock<HashSet<String>>>,
     /// Console broadcast channel for WebSocket streaming.
     pub console: Arc<ConsoleBroadcast>,
@@ -70,6 +74,7 @@ pub fn router(state: AppState) -> Router {
 /// Middleware that validates Bearer token authentication.
 ///
 /// Checks the Authorization header for a valid session token.
+/// Also supports `?token=` query parameter for WebSocket connections.
 /// Returns 401 Unauthorized if the token is missing or invalid.
 async fn auth_middleware(
     axum::extract::State(state): axum::extract::State<AppState>,
@@ -82,7 +87,24 @@ async fn auth_middleware(
         .and_then(|v| v.to_str().ok())
         .map(String::from);
 
-    let is_valid = crate::auth::validate_token(&state.sessions, auth_header.as_deref()).await;
+    // Also check query parameter for WebSocket connections
+    let query_token = request
+        .uri()
+        .query()
+        .and_then(|q| {
+            q.split('&')
+                .find_map(|pair| pair.strip_prefix("token="))
+                .map(String::from)
+        });
+
+    let is_valid = if crate::auth::validate_token(&state.sessions, auth_header.as_deref()).await {
+        true
+    } else if let Some(ref token) = query_token {
+        let bearer = format!("Bearer {token}");
+        crate::auth::validate_token(&state.sessions, Some(&bearer)).await
+    } else {
+        false
+    };
 
     if is_valid {
         next.run(request).await

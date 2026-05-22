@@ -74,6 +74,7 @@ async fn handle_ws(mut socket: WebSocket, state: AppState) {
             Some(Ok(msg)) = socket.recv() => {
                 match msg {
                     Message::Text(text) => {
+                        tracing::info!(target: "dashboard", "WebSocket command received: {}", text);
                         let _ = state.server.execute_command(&text).await;
                     }
                     Message::Close(_) => break,

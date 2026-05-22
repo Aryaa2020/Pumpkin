@@ -36,7 +36,6 @@ impl ServerProvider for DashboardServerProvider {
         Box::pin(async {
             let player_count = self.server.get_player_count() as u32;
             let max_players = self.server.basic_config.max_players;
-            let tps = f64::from(self.server.basic_config.tps);
 
             // Compute average tick time from stored tick times
             let avg_tick_ms = {
@@ -50,12 +49,22 @@ impl ServerProvider for DashboardServerProvider {
                 }
             };
 
-            // Memory usage from sysinfo would require an external call;
-            // use a simple estimation based on process info
+            // Compute actual TPS from tick timing; cap at configured max
+            let tps = if avg_tick_ms > 0.0 {
+                (1000.0 / avg_tick_ms).min(f64::from(self.server.basic_config.tps))
+            } else {
+                f64::from(self.server.basic_config.tps)
+            };
+
+            // Memory usage from process-specific RSS
             let memory_usage_mb = {
+                use sysinfo::Pid;
+                let pid = Pid::from_u32(std::process::id());
                 let mut sys = sysinfo::System::new();
-                sys.refresh_memory();
-                sys.used_memory() / (1024 * 1024)
+                sys.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
+                sys.process(pid)
+                    .map(|p| p.memory() / (1024 * 1024))
+                    .unwrap_or(0)
             };
 
             let uptime_secs = self.start_time.elapsed().as_secs();
@@ -155,6 +164,10 @@ impl ServerProvider for DashboardServerProvider {
                     pumpkin_util::text::TextComponent::text(&format!("Banned: {reason}")),
                 )
                 .await;
+            tracing::warn!(
+                "Dashboard ban: player {} kicked but ban persistence is not yet implemented",
+                uuid
+            );
             Ok(())
         })
     }

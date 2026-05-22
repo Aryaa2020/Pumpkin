@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Address semantic review findings: install DashboardTracingLayer, fix TPS calculation, add empty password validation, use process RSS for memory, add WebSocket audit logging, document ban persistence gap, and add session expiry TODO.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - Install DashboardTracingLayer: Create a global CONSOLE_BROADCAST static in pumpkin/src/lib.rs, add the DashboardTracingLayer to the tracing subscriber registry in init_logger, and use the shared static when spawning the dashboard.",
+    "Step 2 - Fix TPS calculation: In pumpkin/src/net/dashboard.rs, compute actual TPS from avg_tick_ms rather than always returning the configured value.",
+    "Step 3 - Empty password validation: In PumpkinServer::new(), check that the dashboard password is non-empty before starting. Log an error and skip startup if empty.",
+    "Step 4 - Process RSS for memory: In pumpkin/src/net/dashboard.rs, use sysinfo process-specific memory instead of system-wide used_memory.",
+    "Step 5 - WebSocket audit logging: In pumpkin-dashboard/src/api/console.rs, add tracing::info when a command is received via WebSocket.",
+    "Step 6 - Ban persistence warning: In pumpkin/src/net/dashboard.rs ban_player, add a tracing::warn noting ban persistence is not yet implemented.",
+    "Step 7 - Session expiry TODO: Add a doc comment on sessions field in AppState noting that session expiry should be added in a future iteration."
+  ],
+  "acceptance_criteria": [
+    "DashboardTracingLayer is registered in the tracing subscriber so WebSocket clients receive log lines",
+    "TPS in get_status reflects actual tick performance, not just the configured value",
+    "Dashboard refuses to start if password is empty, with an error log",
+    "Memory usage reports process RSS, not system-wide RAM",
+    "WebSocket command execution is audit-logged with tracing::info",
+    "Ban function logs a warning about persistence gap",
+    "Sessions field documents the need for future expiry logic"
+  ],
+  "verification": [
+    "Verify CONSOLE_BROADCAST static exists in pumpkin/src/lib.rs",
+    "Verify DashboardTracingLayer is added to registry in init_logger",
+    "Verify TPS is computed from avg_tick_ms in get_status",
+    "Verify password check in PumpkinServer::new dashboard startup",
+    "Verify process memory usage in get_status",
+    "Verify tracing::info in WebSocket handler",
+    "Verify tracing::warn in ban_player",
+    "Verify doc comment on sessions field"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
